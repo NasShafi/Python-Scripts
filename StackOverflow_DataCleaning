@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# In[2]:
+
+
+sodf20 = pd.read_csv("survey_results_public2020.csv", usecols = ['Respondent', 'DevType'])
+sodf20.dropna(inplace = True)
+sodf20['Year'] = 2020
+sodf20.head()
+
+
+# In[3]:
+
+
+sodf19 = pd.read_csv("survey_results_public2019.csv", usecols = ['Respondent', 'DevType'])
+sodf19.dropna(inplace = True)
+sodf19['Year'] = 2019
+sodf19.head()
+
+
+# In[4]:
+
+
+sodf18 = pd.read_csv("survey_results_public2018.csv", usecols = ['Respondent', 'DevType'])
+sodf18.dropna(inplace = True)
+sodf18['Year'] = 2018
+sodf18.head()
+
+
+# In[5]:
+
+
+# 2017 version has multiple columns for current role. Currently only considering DeveloperType and NonDeveloperType
+# Make a new column that concats DeveloperType and NonDeveloperType together to make a DevType column similar to other years.
+sodf17 = pd.read_csv("survey_results_public2017.csv", usecols = ['Respondent', 'DeveloperType', 'NonDeveloperType'])
+sodf17['DevType'] = np.where(sodf17['DeveloperType'].isna(), 
+                             sodf17['NonDeveloperType'],
+                             sodf17['DeveloperType'] + (';' + sodf17['NonDeveloperType']).fillna(''))
+sodf17.drop(['DeveloperType', 'NonDeveloperType'], axis = 1, inplace = True)
+sodf17.dropna(subset = ['DevType'], inplace = True)
+#remove leading space in front of delimiter to make it consistent with other years
+sodf17['DevType'] = sodf17['DevType'].str.replace("; ", ";")
+sodf17['Year'] = 2017
+display(sodf17)
+
+
+# In[6]:
+
+
+sodf = sodf17.append([sodf18, sodf19, sodf20])
+display(sodf)
+
+
+# In[7]:
+
+
+sodf['DevType'] = sodf['DevType'].str.split(';')
+sodf = sodf.explode('DevType')
+display(sodf)
+
+
+# In[8]:
+
+
+sodfRoles = sodf.drop_duplicates(subset = ['DevType', 'Year'])
+sodfRoles = sodfRoles.groupby(['DevType'])['Year'].apply(list)
+sodfRoles = sodfRoles.reset_index()
+sodfRoles.head()
+
+
+# In[9]:
+
+
+sodfRoles.to_csv("StackOverflow_Roles.csv", index = False)
+
+
+# In[ ]:
+
+
+
